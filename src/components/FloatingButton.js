@@ -6,8 +6,8 @@ export default function FloatingButton({ children, onClick, color }) {
     <Flex
       as="button"
       pos="fixed"
-      bottom="3rem"
-      right="3rem"
+      bottom={["1rem", "3rem"]}
+      right={["1rem", "3rem"]}
       borderRadius="full"
       bg={color ? color : 'teal.400'}
       w="60px"

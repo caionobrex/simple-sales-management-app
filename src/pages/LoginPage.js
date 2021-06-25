@@ -22,7 +22,7 @@ const FormInput = (props) => (
   </FormControl>
 );
 
-export default function LoginForm(props) {
+export default function LoginPage(props) {
   const [user, setUser] = useState('');
   const [pass, setPass] = useState('');
   
@@ -32,11 +32,18 @@ export default function LoginForm(props) {
   
   const onSubmitHandle = (event) => {
     event.preventDefault();
-    if (user === 'caio' && pass === 'nobre') {
-      const user = { name: 'caio', pass: 'nobre' };
-      localStorage.setItem('user', user);
-      props.setUser(user);
-    }
+    fetch('/api/auth', {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({ user, pass })
+    })
+    .then(res => res.json())
+    .then(data => {
+      if (!data.user) return alert('Credencias erradas.');
+
+      localStorage.setItem('user', data.user);
+      props.setUser(data.user);
+    });
   };
   
   return (

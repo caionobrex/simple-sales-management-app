@@ -1,8 +1,8 @@
 import React, { useEffect, useState } from 'react';
-import { Link, Route, useHistory } from 'react-router-dom';
-import { DeleteButton, DiscountForm } from '../components';
-import { Box, Button, Flex } from '@chakra-ui/core';
-import { CloseIcon } from '@chakra-ui/icons';
+import { Route, useHistory } from 'react-router-dom';
+import { DeleteButton, DiscountForm, FloatingButton } from '../components';
+import { Box, Flex } from '@chakra-ui/core';
+import { AddIcon, CloseIcon } from '@chakra-ui/icons';
 
 const DiscountFormContainer = ({ history, product, days }) => {
 
@@ -30,6 +30,7 @@ const DiscountFormContainer = ({ history, product, days }) => {
       justifyContent="center"
       alignItems="center"
       bg="rgba(0,0,0,0.1)"
+      p={[4, 0]}
     >
       <Box p={4} w="450px" bg="white" pos="relative">
         <CloseIcon
@@ -103,6 +104,16 @@ export default function ProductPage(props) {
     <Box p={2}>
       {isFetching ? null : (
         <>
+          <ProductDiscountsTable
+            product={product}
+            days={days}
+            onClickDelete={onClickDelete}
+          />
+
+          <FloatingButton onClick={() => history.push(`/products/${id}/discounts/add`)}>
+            <AddIcon color="white" />
+          </FloatingButton>
+
           <Route
             path="/products/:id/discounts/add"
             component={() => (
@@ -113,17 +124,6 @@ export default function ProductPage(props) {
               />
             )}
           />
-
-          <Box>
-            <Link to={`/products/${id}/discounts/add`}>
-              <Button colorScheme="blue">Add Desconto</Button>
-            </Link>
-            <ProductDiscountsTable
-              product={product}
-              days={days}
-              onClickDelete={onClickDelete}
-            />
-          </Box>
         </>
       )}
     </Box>

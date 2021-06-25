@@ -1,5 +1,5 @@
 import React, { createRef, useEffect, useState } from 'react';
-import { DeleteButton } from '../components';
+import { DeleteButton, FloatingButton, OpenMobileNavBtn } from '../components';
 import {
   Box,
   Button,
@@ -178,20 +178,15 @@ export default function WorkersPage() {
       >
         <Box
           as="span"
-          fontSize="2rem"
+          fontSize={['1.4rem', '2rem']}
           fontWeight="semibold"
         >
           Funcionários
         </Box>
-        <AddIcon
-          ref={btnRef}
-          onClick={onOpen}
-          fontSize="1.5rem"
-          cursor="pointer"
-        />
+        <Box><OpenMobileNavBtn /></Box>
       </Flex>
 
-      <Box p={4} pt={1} pb={1}>
+      <Box p="4" pt="1" pb="4rem">
         {isFetching ? <Center><Spinner /></Center> : workers.length === 0 ? (
           <Center>Nenhum funcionario</Center>
         ) : (
@@ -209,6 +204,10 @@ export default function WorkersPage() {
         finalFocusRef={btnRef}
         toast={toast}
       />
+
+      <FloatingButton onClick={onOpen}>
+        <AddIcon ref={btnRef} color="white"  />
+      </FloatingButton>
     </Box>
   );
 };

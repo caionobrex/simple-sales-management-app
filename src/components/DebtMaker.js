@@ -1,6 +1,6 @@
 import React, { useState, useEffect } from "react";
 import { useHistory } from "react-router";
-import { ItemsTable } from ".";
+import { ItemList } from ".";
 import {
   Box,
   Flex,
@@ -140,12 +140,37 @@ export default function DebtMaker(props) {
     });
   }, [client]);
 
+  useEffect(() => {
+    document.body.style.overflowY = 'hidden';
+    return () => document.body.style.overflowY = 'auto';
+  });
+
+  useEffect(() => {
+    function onKeyUpHandle(event) {
+      if (event.keyCode === 27) {
+        history.goBack();
+        document.body.style.overflowY = 'auto';
+      }
+    }
+    document.addEventListener('keyup', onKeyUpHandle);
+    return () => document.removeEventListener('keyup', onKeyUpHandle);
+  });
+
   return (
-    <>
+    <Flex
+      pos="fixed"
+      top="0"
+      left="0"
+      w="100%"
+      h="100%"
+      bg="white"
+      zIndex="1200"
+    >
       <Box
         pos="fixed"
-        w="400px"
+        w="35%"
         h="100%"
+        d={['none', 'block']}
         overflowY="scroll"
       >
         {isFetching ? (
@@ -159,7 +184,11 @@ export default function DebtMaker(props) {
         )}
       </Box>
 
-      <Box as="main" ml="400px">
+      <Box
+        as="main"
+        ml={['0', '35%']}
+        w={['100%', '75%']}
+      >
         <Flex
           as="header"
           bg="red.300"
@@ -176,8 +205,13 @@ export default function DebtMaker(props) {
           </Box>
         </Flex>
 
-        <Box as="main" h="80vh" p={2}>
-          <ItemsTable
+        <Box
+          as="main"
+          h="80vh"
+          p="2"
+          overflowY="auto"
+        >
+          <ItemList
             items={debt.items}
             changeQty={changeQty}
             deleteItem={deleteItem}
@@ -201,7 +235,7 @@ export default function DebtMaker(props) {
         </Flex>
       </Box>
 
-    </>
+    </Flex>
   );
 };
 

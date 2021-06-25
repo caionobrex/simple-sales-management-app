@@ -1,9 +1,10 @@
 import React, { useEffect, useState } from 'react';
-import { Link, useHistory } from 'react-router-dom';
-import { FloatingButton, OrdersTable } from '../components';
 import { AddIcon } from '@chakra-ui/icons';
+import { Link, useHistory } from 'react-router-dom';
+import { FloatingButton, OpenMobileNavBtn, OrderList } from '../components';
 import {
   Box,
+  Flex,
   Center,
   Select,
   Spinner,
@@ -14,40 +15,31 @@ import {
   Tabs
 } from '@chakra-ui/core';
 
-const DebtsTableRow = ({ debt, client, changeDebtState }) => {
-  const [isHovering, setIsHovering] = useState(false);
-
-  return (
-    <Box
-      as="tr"
-      bg={debt.state === 'Pago' ? 'green.200' : isHovering ? 'gray.100' : ''}
-      onMouseEnter={() => setIsHovering(true)}
-      onMouseLeave={() => setIsHovering(false)}
-    >
-      <Box as="td" textAlign="left">R$ {debt.value.toFixed(2)}</Box>
-      <Box as="td" textAlign="center">
-        <Link to={`/clients/${client.name}/debts/${debt._id}/items`}>
-          {debt.itemsCount}
-        </Link>
-      </Box>
-      <Box as="td" textAlign="center">R$ {debt.paid.toFixed(2)}</Box>
-      <Box as="td" textAlign="center">
-        <Select onChange={(event) => changeDebtState(debt, event.currentTarget.value)}>
-          {['Registado', 'Pago'].map((debtState) => (
-            <Box
-              as="option"
-              value={debtState}
-              selected={debtState === debt.state}
-            >
-              {debtState}
-            </Box>
-          ))}
-        </Select>
-      </Box>
-      <Box as="td" textAlign="center">{getDate(debt.createdAt)}</Box>
+const DebtsTableRow = ({ debt, client, changeDebtState }) => (
+  <Box as="tr" bg={debt.state === 'Pago' ? 'green.300' : 'red.300'}>
+    <Box as="td" textAlign="left">R$ {debt.value.toFixed(2)}</Box>
+    <Box as="td" textAlign="center">
+      <Link to={`/clients/${client.name}/debts/${debt._id}/items`}>
+        {debt.itemsCount}
+      </Link>
     </Box>
-  );
-};
+    <Box as="td" textAlign="center">R$ {debt.paid.toFixed(2)}</Box>
+    <Box as="td" textAlign="center">
+      <Select onChange={(event) => changeDebtState(debt, event.currentTarget.value)}>
+        {['Registado', 'Pago'].map((debtState) => (
+          <Box
+            as="option"
+            value={debtState}
+            selected={debtState === debt.state}
+          >
+            {debtState}
+          </Box>
+        ))}
+      </Select>
+    </Box>
+    <Box as="td" textAlign="center">{getDate(debt.createdAt)}</Box>
+  </Box>
+);
 
 const DebtsTable = ({ debts, client, changeDebtState }) => (
   <Box as="table">
@@ -71,6 +63,67 @@ const DebtsTable = ({ debts, client, changeDebtState }) => (
     </Box>
   </Box>
 );
+
+const TabsContainer = ({
+  orders,
+  debts,
+  client,
+  tabIndex,
+  onChangeHandle,
+  setOrders,
+  changeDebtState
+}) => {
+  const history = useHistory();
+
+  return (
+    <Tabs
+      defaultIndex={tabIndex}
+      variant="soft-rounded"
+      isFitted
+      onChange={onChangeHandle}
+    >
+      <TabList>
+        <Tab>Pedidos</Tab>
+        <Tab>Debitos</Tab>
+      </TabList>
+
+      <TabPanels mt={2}>
+        <TabPanel p={0} pt={3}>
+          {orders.length === 0 ? (
+            <Center textAlign="center" p={5}>Nenhum Pedido</Center>
+          ) : (
+            <OrderList
+              orders={orders}
+              setOrders={setOrders}
+              onClick={(order) => history.push(`/clients/${client.name}/orders/${order._id}/items`)}
+            />
+          )}
+          <FloatingButton onClick={() => history.push(`/clients/${client.name}/orders/add`)}>
+            <AddIcon color="white" />
+          </FloatingButton>
+        </TabPanel>
+
+        <TabPanel p={0} pt={3}>
+          {debts.length === 0 ? (
+            <Center textAlign="center" p={5}>Nenhum Debito</Center>
+          ) : (
+            <DebtsTable
+              debts={debts}
+              client={client}
+              changeDebtState={changeDebtState}
+            />
+          )}
+          <FloatingButton
+            color="red.400"
+            onClick={() => history.push(`/clients/${client.name}/debts/add`)}
+          >
+            <AddIcon color="white" />
+          </FloatingButton>
+        </TabPanel> 
+      </TabPanels>
+    </Tabs>
+  );
+};
 
 export default function ClientPage(props) {
   const [client, setClient] = useState({});
@@ -114,63 +167,38 @@ export default function ClientPage(props) {
     });
   }, []);
 
+  useEffect(() => window.scrollTo(0, 0), []);
+
   return (
     <Box>
-      <Box as="header" bg="blue.400" p={4}>
+      <Flex
+        as="header"
+        bg="blue.400"
+        justifyContent="space-between"
+        p={4}
+      >
         <Box
           as="span"
-          fontSize="2rem"
+          fontSize={['1.4rem', '2rem']}
           color="white"
           fontWeight="semibold"
         >
           Cliente {client.name}
         </Box>
-      </Box>
+        <OpenMobileNavBtn />
+      </Flex>
 
-      <Box p={4}>
+      <Box p={4} pb="6rem">
         {isFetching ? ( <Center><Spinner /></Center> ) : (
-          <Tabs
-            defaultIndex={tabIndex}
-            variant="soft-rounded"
-            isFitted
-            onChange={onChangeHandle}
-          >
-            <TabList>
-              <Tab>Pedidos</Tab>
-              <Tab>Debitos</Tab>
-            </TabList>
-
-            <TabPanels>
-              <TabPanel p={0} pt={3}>
-                {orders.length === 0 ? (
-                  <Center textAlign="center" p={5}>Nenhum Pedido</Center>
-                ) : (
-                  <OrdersTable orders={orders} setOrders={setOrders}/>
-                )}
-                <FloatingButton onClick={() => history.push(`/clients/${client.name}/orders/add`)}>
-                  <AddIcon color="white" />
-                </FloatingButton>
-              </TabPanel>
-
-              <TabPanel p={0} pt={3}>
-                {debts.length === 0 ? (
-                  <Center textAlign="center" p={5}>Nenhum Debito</Center>
-                ) : (
-                  <DebtsTable
-                    debts={debts}
-                    client={client}
-                    changeDebtState={changeDebtState}
-                  />
-                )}
-                <FloatingButton
-                  color="red.400"
-                  onClick={() => history.push(`/clients/${client.name}/debts/add`)}
-                >
-                  <AddIcon color="white" />
-                </FloatingButton>
-              </TabPanel> 
-            </TabPanels>
-          </Tabs>
+          <TabsContainer
+            orders={orders}
+            debts={debts}
+            client={client}
+            tabIndex={tabIndex}
+            changeDebtState={changeDebtState}
+            onChangeHandle={onChangeHandle}
+            setOrders={setOrders}
+          />
         )}
       </Box>
     </Box>

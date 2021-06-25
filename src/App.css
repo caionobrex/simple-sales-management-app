@@ -1,0 +1,19 @@
+table {
+  width: 100%;
+  border-collapse: separate !important;
+  border-spacing: 0 1rem;
+}
+
+@media only screen and (max-width: 601px) {
+  table tr {
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    margin: 0.6rem 0;
+    border-bottom: 1px solid #bdbdbd;
+  }
+
+  table th { margin: 0.6rem 0; }
+
+  table td { margin: 0.6rem 0; }
+}

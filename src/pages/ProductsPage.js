@@ -1,6 +1,6 @@
 import React, { createRef, useEffect, useState } from 'react';
-import { Link } from 'react-router-dom';
-import { DeleteButton, SearchBox, Pagination } from '../components';
+import { useHistory } from 'react-router-dom';
+import { DeleteButton, SearchBox, Pagination, FloatingButton, OpenMobileNavBtn } from '../components';
 import {
   Box,
   Button,
@@ -15,6 +15,7 @@ import {
   Flex,
   FormControl,
   FormLabel,
+  Grid,
   Input,
   Spinner,
   useDisclosure,
@@ -24,51 +25,73 @@ import { AddIcon, EditIcon } from '@chakra-ui/icons';
 import { Form, Formik } from 'formik';
 import moment from 'moment';
 
-const ProductsTableRow = ({
+const ProductCard = ({
   product,
   setInitialValues,
   setIsEditing,
   onOpen,
   onClickDelete
 }) => {
-  const [isHovering, setIsHovering] = useState(false);
+  const history = useHistory();
 
   return (
-    <Box
-      as="tr"
-      bg={product.stock === 0 ? 'red.200' : hasDiscountToday(product) ? 'green.200' : isHovering ? 'gray.100' : ''}
-      onMouseEnter={() => setIsHovering(true)}
-      onMouseLeave={() => setIsHovering(false)}
+    <Box boxShadow="md">
+      <Box
+        as="header"
+        color="white"
+        fontWeight="semibold"
+        cursor="pointer"
+        bg={product.stock === 0 ? 'red.300' : hasDiscountToday(product) ? 'green.300' : 'blue.300'}
+        p={4}
+        onClick={() => history.push(`/products/${product._id}`)}
       >
-      <Box as="td" textAlign="left" p={2}>
-        <Link to={`/products/${product._id}`}>{product.name}</Link>
+        <Box as="span">{product.name}</Box>
       </Box>
-      <Box as="td" textAlign="center">
-        {
-          !hasDiscountToday(product) ? `R$ ${product.price.toFixed(2)}` :
-          product.discounts.map((discount) => {
-            if (discount.discountDay === new Date(Date.now()).getDay())
-              return `R$ ${discount.discountedPrice.toFixed(2)}`
-          })
-        }
+
+      <Box as="main" p={5}>
+        <Box as="p" mb={4}>
+          <Box as="span" color="gray.500">Preço Hoje: </Box>
+          {
+            !hasDiscountToday(product) ? `R$ ${product.price.toFixed(2)}` :
+            product.discounts.map((discount) => {
+              if (discount.discountDay === new Date(Date.now()).getDay())
+                return `R$ ${discount.discountedPrice.toFixed(2)}`
+            })
+          }
+        </Box>
+        <Box as="p" mb={4}>
+          <Box as="span" color="gray.500">Preço Normal: </Box>
+          R$ {product.price.toFixed(2)}
+        </Box>
+        <Box as="p" mb={4}>
+          <Box as="span" color="gray.500">Desconto Hoje: </Box>
+          {
+            !hasDiscountToday(product) ? `0%` :
+            product.discounts.map((discount) => {
+              if (discount.discountDay === new Date(Date.now()).getDay())
+                return `${Math.round(discount.discount)}%`
+            })
+          }
+        </Box>
+        <Box as="p" mb={4}>
+          <Box as="span" color="gray.500">Stock:</Box> {product.stock}
+        </Box>
+        <Box as="p">
+          <Box as="span" color="gray.500">
+          Vendas:</Box> {product.sales}
+        </Box>
       </Box>
-      <Box as="td" textAlign="center">R$ {product.price.toFixed(2)}</Box>
-      <Box as="td" textAlign="center">
-        {
-          !hasDiscountToday(product) ? `0%` :
-          product.discounts.map((discount) => {
-            if (discount.discountDay === new Date(Date.now()).getDay())
-              return `${Math.round(discount.discount)}%`
-          })
-        }
-      </Box>
-      <Box as="td" textAlign="center">{product.stock}</Box>
-      <Box as="td" textAlign="center">{product.sales}</Box>
-      <Box as="td" textAlign="center">
+
+      <Flex
+        as="footer"
+        justifyContent="space-between"
+        borderTop="1px"
+        borderColor="gray.200"
+        p={4}
+      >
         <EditIcon
           color="teal.500"
           cursor="pointer"
-          mr={2}
           onClick={() => {
             setInitialValues({
               id: product._id,
@@ -84,36 +107,23 @@ const ProductsTableRow = ({
           header="Deletar Produto"
           onDelete={() => onClickDelete(product._id)}
         />
-      </Box>
+      </Flex>
     </Box>
   );
 };
 
-const ProductsTable = (props) => (
-  <Box as="table">
-    <Box as="thead">
-      <Box as="tr">
-        <Box as="th" textAlign="left">Produto</Box>
-        <Box as="th" textAlign="center">Preço Hoje</Box>
-        <Box as="th" textAlign="center">Preço Normal</Box>
-        <Box as="th" textAlign="center">Desconto Hoje</Box>
-        <Box as="th" textAlign="center">Stock</Box>
-        <Box as="th" textAlign="center">Vendas</Box>
-        <Box as="th" textAlign="center">Ações</Box>
-      </Box>
-    </Box>
-    <Box as="tbody">
-      {props.products.map((product) => (
-        <ProductsTableRow
-          product={product}
-          setInitialValues={props.setInitialValues}
-          setIsEditing={props.setIsEditing}
-          onOpen={props.onOpen}
-          onClickDelete={props.onClickDelete}
-        />
-      ))}
-    </Box>
-  </Box>
+const ProductList = (props) => (
+  <Grid templateColumns={['100%', 'repeat(3, 1fr)']} gap={4}>
+    {props.products.map((product) => (
+      <ProductCard
+        product={product}
+        setInitialValues={props.setInitialValues}
+        setIsEditing={props.setIsEditing}
+        onOpen={props.onOpen}
+        onClickDelete={props.onClickDelete}
+      />
+    ))}
+  </Grid>
 );
 
 const ProductForm = (props) => (
@@ -303,7 +313,7 @@ export default function ProductsPage() {
       >
         <Box
           as="span"
-          fontSize="2rem"
+          fontSize={["1.4rem", "2rem"]}
           fontWeight="semibold"
         >
           Produtos / {totalCount}
@@ -313,32 +323,31 @@ export default function ProductsPage() {
           <SearchBox onSearch={onSearchHandle} />
         </Box>
 
-        <AddIcon
-          ref={btnRef}
-          cursor="pointer"
-          fontSize="1.5rem"
-          onClick={onClickHandle}
-        />
+        <Box><OpenMobileNavBtn /></Box>
       </Flex>
 
-      <Box p={4}>
-        {isFetching ? <Center><Spinner /></Center> : (
-          <ProductsTable
-            products={products}
-            setInitialValues={setInitialValues}
-            setIsEditing={setIsEditing}
-            onOpen={onOpen}
-            onClickDelete={onClickDelete}
-          />
-        )}
-
-        <Box mt={2}>
-          <Pagination
-            currentPage={currentPage}
-            nOfPages={Math.ceil(totalCount / 15)}
-            onClick={(page) => setCurrentPage(page)}
-          />
+      <Box p={4} mt={2} pb="4rem">
+        <Box d={['block', 'none']} mb={6}>
+          <SearchBox onSearch={onSearchHandle} />
         </Box>
+        {isFetching ? <Center><Spinner /></Center> : (
+          <> 
+            <ProductList
+              products={products}
+              setInitialValues={setInitialValues}
+              setIsEditing={setIsEditing}
+              onOpen={onOpen}
+              onClickDelete={onClickDelete}
+            />
+            <Box mt={4}>
+              <Pagination
+                currentPage={currentPage}
+                nOfPages={Math.ceil(totalCount / 15)}
+                onClick={(page) => setCurrentPage(page)}
+              />
+            </Box>
+          </>
+        )}
       </Box>
 
       <ProductForm
@@ -349,6 +358,10 @@ export default function ProductsPage() {
         isEditing={isEditing}
         onSubmitHandle={onSubmitHandle}
       />
+
+      <FloatingButton onClick={onClickHandle}>
+        <AddIcon ref={btnRef} color="white" />
+      </FloatingButton>
     </>
   );
 };

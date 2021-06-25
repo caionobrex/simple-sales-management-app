@@ -10,7 +10,7 @@ import {
   AlertDialogOverlay
 } from '@chakra-ui/modal';
 
-export default function DeleteButton({ onDelete, header, body }) {
+export default function DeleteButton({ header, body, onDelete }) {
   const [isOpen, setIsOpen] = useState();
   const cancelRef = useRef();
 

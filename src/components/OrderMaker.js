@@ -1,5 +1,5 @@
 import React, { useState, useEffect } from 'react';
-import { ItemsTable, SearchBox } from '.';
+import { FloatingButton, ItemList, SearchBox } from '.';
 import { useHistory } from 'react-router';
 import {
   Box,
@@ -8,25 +8,29 @@ import {
   NumberInputField,
   Spinner,
   Button,
-  useToast
+  useToast,
+  Grid
 } from '@chakra-ui/core';
 import moment from 'moment';
+import { AddIcon, CloseIcon } from '@chakra-ui/icons';
+import Pagination from './Pagination';
 
 const ProductTableRow = ({ product, isSelected, pickItem }) => {
   const [isHovering, setIsHovering] = useState(false);
 
   return (
-    <Box
-      as="tr"
-      p="1rem"
+    <Flex
+      justifyContent="space-between"
       cursor="pointer"
-      bg={isSelected || isHovering ? 'green.200' : ''}
+      p={3}
+      bg={[isSelected ? 'green.200' : '', isSelected || isHovering ? 'green.200' : '']}
       onMouseEnter={() => setIsHovering(true)}
       onMouseLeave={() => setIsHovering(false)}
       onClick={() => pickItem(product._id)}
     >
-      <Box as="td" textAlign="left" p={2}>{product.name}</Box>
-      <Box as="td" textAlign="left">
+      <Box flex="0 70%">{product.name}</Box>
+
+      <Box flex="0 25%">
         {
           !hasDiscountToday(product) ? `R$ ${product.price.toFixed(2)}` :
           product.discounts.map((discount) => {
@@ -35,99 +39,49 @@ const ProductTableRow = ({ product, isSelected, pickItem }) => {
           })
         }
       </Box>
+
       <Box
-        as="td"
+        flex="1"
         textAlign="center"
         color={product.qty === 0 ? 'red.400' : ''}
       >
         {product.qty}
       </Box>
-    </Box>
+    </Flex>
   );
 };
 
 const ProductTable = (props) => (
-  <Box as="table">
-    <Box as="thead">
-      <Box as="tr">
-        <Box as="th" pl="2" pr="2" textAlign="left">Produto</Box>
-        <Box as="th" textAlign="left">Preço</Box>
-        <Box as="th" textAlign="center">Stock</Box>
-      </Box>
-    </Box>
-    <Box as="tbody">
-      {props.products.map((product) => {
-        if (props.items.filter((item) => product.name === item.name).length > 0) {
-          return (
-            <ProductTableRow
-              product={product}
-              pickItem={props.pickItem}
-              isSelected
-            />
-          );
-        }
+  <Grid rowGap={3}>
+    {props.products.map((product) => {
+      if (props.items.filter((item) => product.name === item.name).length > 0) {
         return (
           <ProductTableRow
             product={product}
             pickItem={props.pickItem}
+            isSelected
           />
         );
-      })}
-    </Box>
-  </Box>
-);
-
-const WorkersTableRow = ({ worker, deliveredBy, pickWorker }) => {
-  const [isHovering, setIsHovering] = useState(false);
-
-  return (
-    <Box
-      as="tr"
-      cursor="pointer"
-      bg={deliveredBy === worker.name || isHovering ?'green.200' : ''}
-      onMouseEnter={() => setIsHovering(true)}
-      onMouseLeave={() => setIsHovering(false)}
-      onClick={() => pickWorker(worker)}
-    >
-      <Box as="td" p={2}>{worker.name}</Box>
-    </Box>
-  );
-};
-
-const WorkersTable = ({ workers, deliveredBy, pickWorker }) => (
-  <Box as="table">
-    <Box as="thead">
-      <Box as="tr">
-        <Box
-          as="th"
-          pl={2}
-          pr={2}
-          textAlign="left"
-        >
-          Nome
-        </Box>
-      </Box>
-    </Box>
-    <Box as="tbody">
-      {workers.map((worker) => (
-        <WorkersTableRow
-          worker={worker}
-          deliveredBy={deliveredBy}
-          pickWorker={pickWorker}
+      }
+      return (
+        <ProductTableRow
+          product={product}
+          pickItem={props.pickItem}
         />
-      ))}
-    </Box>
-  </Box>
+      );
+    })}
+  </Grid>
 );
 
 const SideNav = (props) => (
   <Box
     pos="fixed"
-    w={['100%', '400px']}
+    d={[props.isOpen ? 'block' : 'none', 'block']}
+    w={['100%', '35%']}
     h="100%"
     bg="white"
+    overflowY="scroll"
     zIndex={['1500', '1']}
-    ml={['-100%', '0']}
   >
     {props.isFetching ? (
       <Flex
@@ -138,28 +92,30 @@ const SideNav = (props) => (
         <Spinner />
       </Flex>
     ) : (
-      <>
-        <Box h="70%" overflowY="scroll">
-          <Box p={1}>
-            <SearchBox onSearch={props.onSearchHandle} />
-          </Box>
-          <ProductTable {...props} />
+      <Box>
+        <CloseIcon
+          d={["inline-block", "none"]}
+          pos="fixed"
+          top="0"
+          right="0"
+          onClick={() => props.setIsOpen(false)}
+        />
+
+        <Box p={1}>
+          <SearchBox onSearch={props.onSearchHandle} />
         </Box>
 
-        <Box
-          h="30%"
-          mt={4}
-          overflowY="scroll"
-          borderTop="1px"
-          borderColor="gray.200"
-        >
-          <WorkersTable
-            workers={props.workers}
-            deliveredBy={props.deliveredBy}
-            pickWorker={props.pickWorker}
-          />
+        <Box mt={2}>
+          <ProductTable {...props} />
+          <Box p={3}>
+            <Pagination
+              nOfPages={Math.ceil(props.totalCount / 30)}
+              currentPage={props.currentPage}
+              onClick={props.setCurrentPage}
+            />
+          </Box>
         </Box>
-      </>
+      </Box>
     )}
   </Box>
 );
@@ -167,24 +123,27 @@ const SideNav = (props) => (
 const OrderMakerFooter = ({ order, applyDiscount, onSubmitOrder }) => (
   <Flex
     as="footer"
-    justifyContent="space-between"
-    alignItems="center"
+    flexDirection={["column", "row"]}
+    justifyContent={["space-between"]}
+    alignItems={["flex-start", "center"]}
     borderTop="1px"
-    borderColor="gray.200"
-    h="10vh"
-    p={2}
+    borderColor="gray.300"
+    p={4}
   >
     <NumberInput
       min={0}
       max={100}
+      mb={[5, 0]}
+      width={["100%", "auto"]}
       onChange={applyDiscount}
       isDisabled={order.items.length === 0}
     >
       <NumberInputField placeholder="Desconto" />
     </NumberInput>
-    <Box as="span">Entregador: {order.deliveredBy}</Box>
+    <Box as="span" mb={[5, 0]}>Entregador: {order.deliveredBy}</Box>
     <Button
       colorScheme="blue"
+      width={["100%", "auto"]}
       disabled={order.items.length === 0}
       onClick={onSubmitOrder}
     >
@@ -196,6 +155,9 @@ const OrderMakerFooter = ({ order, applyDiscount, onSubmitOrder }) => (
 export default function OrderMaker(props) {
   const [products, setProducts] = useState([]);
   const [workers, setWorkers] = useState([]);
+  const [isOpen, setIsOpen] = useState(false);
+  const [totalCount, setTotalCount] = useState(0);
+  const [currentPage, setCurrentPage] = useState(1);
   const [isFetching, setIsFetching] = useState(false);
   const [order, setOrder] = useState({
     items: [],
@@ -229,7 +191,7 @@ export default function OrderMaker(props) {
         };
         setOrder({
           ...order,
-          items: [...order.items, item],
+          items: [item, ...order.items],
           total: calcTotal([...order.items, item])
         });
         product.qty -= 1;
@@ -339,7 +301,7 @@ export default function OrderMaker(props) {
     };
 
     if (!searchValue) {
-      fetch('/api/products?nPerPage=30')
+      fetch(`/api/products?page=${currentPage}&nPerPage=30`)
       .then(res => res.json())
       .then(handleThen);
     } else {
@@ -358,28 +320,54 @@ export default function OrderMaker(props) {
     })
     .then(res => res.json())
     .then(_order => {
-      history.push(`/clients/${client}/orders`);
+      history.push('/orders');
     });
   };
 
   useEffect(() => {
     setIsFetching(true);
     Promise.all([
-      fetch('/api/products?nPerPage=30').then(res => res.json()),
+      fetch(`/api/products?page=${currentPage}&nPerPage=30`).then(res => res.json()),
       fetch('/api/workers').then(res => res.json()),
     ]).then(([ products, workers ]) => {
       products.products = products.products.map((product) => {
         product.qty = product.stock;
         return product;
       });
+      setTotalCount(products.totalCount);
       setProducts(products.products);
       setWorkers(workers);
       setIsFetching(false);
     });
+  }, [currentPage]);
+
+  useEffect(() => {
+    document.body.style.overflowY = 'hidden';
+    return () => document.body.style.overflowY = 'auto';
   }, []);
 
+  useEffect(() => {
+    function onKeyUpHandle(event) {
+      if (event.keyCode === 27) {
+        history.push(`/clients/${client}/orders`);
+        document.body.style.overflowY = 'auto';
+      }
+    }
+    document.addEventListener('keyup', onKeyUpHandle);
+    return () => document.removeEventListener('keyup', onKeyUpHandle);
+  });
+
   return (
-    <Box>
+    <Flex
+      pos="fixed"
+      top="0"
+      left="0"
+      w="100%"
+      h="100%"
+      bg="white"
+      zIndex="1200"
+      overflowY="scroll"
+    >
       <SideNav
         products={products}
         workers={workers}
@@ -387,31 +375,42 @@ export default function OrderMaker(props) {
         deliveredBy={order.deliveredBy}
         pickItem={pickItem}
         pickWorker={pickWorker}
+        totalCount={totalCount}
+        currentPage={currentPage}
+        setCurrentPage={setCurrentPage}
         onSearchHandle={onSearchHandle}
         isFetching={isFetching}
+        isOpen={isOpen}
+        setIsOpen={setIsOpen}
       />
 
-      <Box ml={['0', '400px']} h="100vh">
+      <Box
+        ml={['0', '35%']}
+        w={['100%', '75%']}
+        h="100%"
+      >
         <Flex
           as="header"
-          h="10vh"
           p="4"
           justifyContent="space-between"
+          alignItems={["flex-start", "center"]}
           fontWeight="semibold"
-          fontSize="1.2rem"
+          fontSize={['1rem', '1.2rem']}
           bg="blue.400"
           color="white"
         >
-          <Box as="span">Pedido para {client}</Box>
-          <Box as="span">Items: {order.items.length}</Box>
+          <Box as="span">Para {client}</Box>
           <Box as="span">Total: R$ {order.total.toFixed(2)}</Box>
         </Flex>
 
-        <Box as="main" h="80vh" p="4" overflowY="auto">
+        <Box as="main" minH="100vh" p="4" pb="6">
+          <Box as="p" fontWeight="semibold" mb={2}>
+            Items: {order.items.length}
+          </Box>
           {order.items.length === 0 ? (
             <Flex
               mt={5}
-              h="100%"
+              minH="100vh"
               fontSize="1.5rem"
               justifyContent="center"
               alignItems="center"
@@ -419,7 +418,7 @@ export default function OrderMaker(props) {
               Nenhum Item
             </Flex>
           ) : (
-            <ItemsTable
+            <ItemList
               items={order.items}
               changeQty={changeQty}
               deleteItem={deleteItem}
@@ -432,9 +431,14 @@ export default function OrderMaker(props) {
           applyDiscount={applyDiscount}
           onSubmitOrder={onSubmitOrder}
         />
-
       </Box>
-    </Box>
+
+      <Box d={["inline", "none"]}>
+        <FloatingButton onClick={() => setIsOpen(true)}>
+          <AddIcon color="white" />
+        </FloatingButton>
+      </Box>
+    </Flex>
   );
 };
 
